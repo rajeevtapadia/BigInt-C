@@ -13,6 +13,7 @@
 #ifndef BIG_INT_H
 
 #define BIG_INT_H
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -25,6 +26,7 @@ typedef struct binint {
 } BigInt;
 
 BigInt bigint_alloc();
+void bigint_free(BigInt *bigint);
 void bigint_set(BigInt *num, char *arr);
 void bigint_expand(BigInt *num);
 void naive_add(BigInt *dest, uint32_t operand);
@@ -33,7 +35,8 @@ void naive_divide(BigInt *dividend, uint32_t divisor, BigInt *quo, uint32_t *rem
 void bigint_mem_dump(BigInt bigint);
 void bigint_left_shift(BigInt *bigint, uint32_t shift_by);
 void bigint_increment_size(BigInt *bigint);
-
+void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size);
+bool bigint_isequal_uint32(BigInt a, uint32_t b);
 #endif
 
 #ifdef BIG_INT_IMPLEMENTATION
@@ -53,10 +56,15 @@ BigInt bigint_alloc() {
     return new_int;
 }
 
+void bigint_free(BigInt *bigint) {
+    free(bigint->buf);
+    bigint->size = 0;
+    bigint->capacity = 0;
+}
+
 void bigint_set(BigInt *num, char *arr) {
     num->size = 1;
     bigint_increment_size(num);
-    bigint_mem_dump(*num);
     for (int i = 0; i < strlen(arr); i++) {
         // convert char to digit
         uint32_t digit = arr[i] - '0';
@@ -69,6 +77,7 @@ void bigint_set(BigInt *num, char *arr) {
     }
 }
 
+// this function should not be used outside and is private to the library
 void bigint_increment_size(BigInt *bigint) {
     bigint->size++;
     if (bigint->size >= bigint->capacity) {
@@ -147,7 +156,7 @@ void naive_divide(BigInt *dividend, uint32_t divisor, BigInt *quo, uint32_t *rem
     bigint_set(quo, "0");
 
     // iterate over all the bits on BigInt from MSB to LSB
-    for (int i = dividend->size - 1; i >= 0; i--) {
+    for (int i = dividend->size - 2; i >= 0; i--) {
         for (int j = 0; j < BASE; j++) {
             // extract a single bit
             uint32_t curr_bit = dividend->buf[i] & (1 << (BASE - j - 1));
@@ -161,6 +170,10 @@ void naive_divide(BigInt *dividend, uint32_t divisor, BigInt *quo, uint32_t *rem
                 *rem -= divisor;
                 naive_add(quo, 1);
             }
+        }
+        
+        if (BIGINT_GUARD(quo) != 0) {
+            bigint_increment_size(quo);
         }
     }
 }
@@ -181,11 +194,48 @@ void bigint_left_shift(BigInt *bigint, uint32_t shift_by) {
     bigint->buf[0] <<= shift_by;
 }
 
+void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size) {
+    // divide the bigint successivly by 10 and push the remainder to a string buffer
+    uint32_t rem = 0;
+    size_t i = 0;
+    BigInt quo;
+    do {
+        assert(i < str_buf_size && "buffer overflow");
+        quo = bigint_alloc();
+        naive_divide(&bigint, 10, &quo, &rem);
+        str_buf[i++] = rem + '0';
+        bigint_free(&bigint);
+        bigint = quo;
+    } while (!bigint_isequal_uint32(bigint, 0));
+
+    // reverse string buffer
+    size_t left = 0, right = --i;
+    while (left < right) {
+        char temp = str_buf[left];
+        str_buf[left] = str_buf[right];
+        str_buf[right] = temp;
+        left++;
+        right--;
+    }
+}
+
+bool bigint_isequal_uint32(BigInt a, uint32_t b) {
+    if (a.buf[0] != b) {
+        return false;
+    }
+    for (int i = 1; i < a.size; i++) {
+        if (a.buf[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // writes content of buff from most significant to least to stdout
 void bigint_mem_dump(BigInt bigint) {
     for (int i = bigint.size - 1; i >= 0; i--) {
         // printf("0x%x ", bigint.buf[i]);
-        printf("%u ", bigint.buf[i]);
+        printf("%010u ", bigint.buf[i]);
     }
     printf("\n");
 }
