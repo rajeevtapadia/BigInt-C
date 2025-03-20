@@ -26,9 +26,11 @@ typedef struct binint {
 } BigInt;
 
 BigInt bigint_alloc();
+void bigint_clear(BigInt *bigint);
 void bigint_free(BigInt *bigint);
 void bigint_set(BigInt *num, char *arr);
 void bigint_expand(BigInt *num);
+void bigint_add(BigInt *dst, BigInt *a, BigInt *b);
 void naive_add(BigInt *dest, uint32_t operand);
 void naive_mult(BigInt *dest, uint32_t multiplier);
 void naive_divide(BigInt *dividend, uint32_t divisor, BigInt *quo, uint32_t *rem);
@@ -37,6 +39,8 @@ void bigint_left_shift(BigInt *bigint, uint32_t shift_by);
 void bigint_increment_size(BigInt *bigint);
 void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size);
 bool bigint_isequal_uint32(BigInt a, uint32_t b);
+void bigint_shallow_copy(BigInt *dst, BigInt *src);
+void bigint_deep_copy(BigInt *dst, BigInt *src);
 #endif
 
 #ifdef BIG_INT_IMPLEMENTATION
@@ -54,6 +58,14 @@ BigInt bigint_alloc() {
     new_int.size = 1;
     new_int.capacity = INIT_SIZE;
     return new_int;
+}
+
+void bigint_clear(BigInt *bigint) {
+    free(bigint->buf);
+    bigint->buf = (uint32_t *)calloc(1, INIT_SIZE * sizeof(uint32_t));
+    assert(bigint->buf != NULL && "memory allocation failed");
+    bigint->size = 1;
+    bigint->capacity = INIT_SIZE;
 }
 
 void bigint_free(BigInt *bigint) {
@@ -91,15 +103,32 @@ void bigint_expand(BigInt *num) {
     assert(num->buf != NULL && "buy more ram bro\n");
 }
 
-void bigint_add(BigInt *dst, BigInt *src) {
-    uint32_t carry = 0;
-    for (int i = 0; i < dst->size; i++) {
+void bigint_add(BigInt *dst, BigInt *a, BigInt *b) {
+    bigint_clear(dst);
+
+    uint32_t carry = 0, a_curr = 0, b_curr = 0;
+    size_t n = (a->size > b->size ? a->size : b->size);
+    for (int i = 0; i < n; i++) {
+        if (i < a->size)
+            a_curr = a->buf[i];
+        else
+            a_curr = 0;
+
+        if (i < b->size)
+            b_curr = b->buf[i];
+        else
+            b_curr = 0;
+
         // store sum in 64 bit variable
-        uint64_t sum = (uint64_t)dst->buf[i] + src->buf[i] + carry;
+        uint64_t sum = (uint64_t)a_curr + b_curr + carry;
         // store lower 32 bits at i th place
         dst->buf[i] = (uint32_t)(sum & 0xFFFFFFFF);
         // store higher 32 bits in carry
         carry = (uint32_t)(sum >> 32);
+
+        if (BIGINT_GUARD(dst) != 0) {
+            bigint_increment_size(dst);
+        }
     }
 }
 
@@ -171,7 +200,7 @@ void naive_divide(BigInt *dividend, uint32_t divisor, BigInt *quo, uint32_t *rem
                 naive_add(quo, 1);
             }
         }
-        
+
         if (BIGINT_GUARD(quo) != 0) {
             bigint_increment_size(quo);
         }
@@ -229,6 +258,17 @@ bool bigint_isequal_uint32(BigInt a, uint32_t b) {
         }
     }
     return true;
+}
+
+void bigint_shallow_copy(BigInt *dst, BigInt *src) {
+    dst->size = src->size;
+    dst->capacity = src->capacity;
+    dst->buf = src->buf;
+}
+void bigint_deep_copy(BigInt *dst, BigInt *src) {
+    dst->size = src->size;
+    dst->capacity = src->capacity;
+    memcpy(dst->buf, src->buf, sizeof(src->buf[0]) * src->size);
 }
 
 // writes content of buff from most significant to least to stdout
