@@ -19,7 +19,7 @@
 
 #define BIGINT_GUARD(n) (n)->buf[(n)->size - 1]
 
-typedef struct binint {
+typedef struct {
     uint32_t *buf;   // array to store numbers with base 2^32
     size_t size;     // used memeory
     size_t capacity; // total allcated memory
@@ -207,7 +207,6 @@ void naive_divide(BigInt *dividend, uint32_t divisor, BigInt *quo, uint32_t *rem
     }
 }
 
-// Todo: extend the bigint on overflow
 void bigint_left_shift(BigInt *bigint, uint32_t shift_by) {
     assert(shift_by < 32 && "Cannot shift more than 31 bits at a time");
     // this function iterates from MSB to LSB with a 32 bit window
@@ -215,10 +214,19 @@ void bigint_left_shift(BigInt *bigint, uint32_t shift_by) {
     // and the bits that will get discarded in the next iteration are stored in discarded
     // then the discarded bits from next window is added to current window
 
+    if(shift_by == 0) {
+        return;
+    }
+    
     for (int i = bigint->size - 1; i > 0; i--) {
         bigint->buf[i] <<= shift_by;
         uint32_t discarded = (bigint->buf[i - 1] >> (BASE - shift_by)) & ((1U << shift_by) - 1);
         bigint->buf[i] |= discarded;
+    }
+    
+    // handle overflow that may happend after left shift 
+    if(BIGINT_GUARD(bigint) != 0){
+        bigint_increment_size(bigint);
     }
     bigint->buf[0] <<= shift_by;
 }
