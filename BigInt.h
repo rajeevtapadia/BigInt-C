@@ -36,6 +36,7 @@ void naive_mult(BigInt *dest, uint32_t multiplier);
 void naive_divide(BigInt *dividend, uint32_t divisor, BigInt *quo, uint32_t *rem);
 void bigint_mem_dump(BigInt bigint);
 void bigint_left_shift(BigInt *bigint, uint32_t shift_by);
+void bigint_right_shift(BigInt *bigint, uint32_t shift_by);
 void bigint_increment_size(BigInt *bigint);
 void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size);
 bool bigint_isequal_uint32(BigInt a, uint32_t b);
@@ -231,6 +232,28 @@ void bigint_left_shift(BigInt *bigint, uint32_t shift_by) {
     bigint->buf[0] <<= shift_by;
 }
 
+void bigint_right_shift(BigInt *bigint, uint32_t shift_by) {
+    assert(shift_by < 32 && "Cannot shift more than 31 bits at a time");
+    // this function iterates from LSB to MSB with a 32 bit window
+    // each iteration current window is right shifted by `shift_by`
+    // and the bits that will get discarded in the next iteration are stored in discarded
+    // then the discarded bits from next window is added to current window
+
+    if (shift_by == 0) {
+        return;
+    }
+
+    for (int i = 0; i < bigint->size - 1; i++) {
+        bigint->buf[i] >>= shift_by;
+        uint32_t discarded = bigint->buf[i + 1] & ((1 << shift_by) - 1U);
+        bigint->buf[i] |= discarded << (BASE - shift_by);
+    }
+
+    // handle size reduction
+    if (bigint->size > 2 && bigint->buf[bigint->size - 2] == 0) {
+        bigint->size--;
+    }
+}
 void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size) {
     // divide the bigint successivly by 10 and push the remainder to a string buffer
     uint32_t rem = 0;
