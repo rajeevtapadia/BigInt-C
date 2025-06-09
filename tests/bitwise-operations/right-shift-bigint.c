@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define BIG_INT_IMPLEMENTATION
-#include "../BigInt.h"
+#include "../../BigInt.h"
 
 void test_case(const char *test_name, char *input, uint32_t shift_by, char* output, size_t expected_size) {
     BigInt n = bigint_alloc();
