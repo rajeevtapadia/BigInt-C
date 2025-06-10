@@ -23,6 +23,7 @@ typedef struct {
     uint32_t *buf;   // array to store numbers with base 2^32
     size_t size;     // used memeory
     size_t capacity; // total allcated memory
+    bool is_negative; // set to 1 if negative
 } BigInt;
 
 BigInt bigint_alloc();
@@ -58,6 +59,7 @@ BigInt bigint_alloc() {
     new_int.buf = (uint32_t *)calloc(1, INIT_SIZE * sizeof(uint32_t));
     new_int.size = 1;
     new_int.capacity = INIT_SIZE;
+    new_int.is_negative = 0;
     return new_int;
 }
 
@@ -67,18 +69,26 @@ void bigint_clear(BigInt *bigint) {
     assert(bigint->buf != NULL && "memory allocation failed");
     bigint->size = 1;
     bigint->capacity = INIT_SIZE;
+    bigint->is_negative = 0;
 }
 
 void bigint_free(BigInt *bigint) {
     free(bigint->buf);
     bigint->size = 0;
     bigint->capacity = 0;
+    bigint->is_negative = 0;
 }
 
 void bigint_set(BigInt *num, char *arr) {
+    int start_idx = 0;
+    if(arr[0] == '-') {
+        num->is_negative = 1;
+        start_idx = 1;
+    }
+    
     num->size = 1;
     bigint_increment_size(num);
-    for (int i = 0; i < strlen(arr); i++) {
+    for (int i = start_idx; i < strlen(arr); i++) {
         // convert char to digit
         uint32_t digit = arr[i] - '0';
 
@@ -259,6 +269,8 @@ void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size) {
     uint32_t rem = 0;
     size_t i = 0;
     BigInt quo;
+    bool is_negative = bigint.is_negative;
+    
     do {
         assert(i < str_buf_size && "buffer overflow");
         quo = bigint_alloc();
@@ -268,6 +280,11 @@ void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size) {
         bigint = quo;
     } while (!bigint_isequal_uint32(bigint, 0));
 
+    if(is_negative) {
+        str_buf[i] = '-';
+        ++i;
+    }
+    
     // reverse string buffer
     size_t left = 0, right = --i;
     while (left < right) {
@@ -304,6 +321,7 @@ void bigint_deep_copy(BigInt *dst, BigInt *src) {
 
 // writes content of buff from most significant to least to stdout
 void bigint_mem_dump(BigInt bigint) {
+    printf("%u ", bigint.is_negative);
     for (int i = bigint.size - 1; i >= 0; i--) {
         // printf("0x%x ", bigint.buf[i]);
         printf("%010u ", bigint.buf[i]);
