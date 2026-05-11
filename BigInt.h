@@ -33,6 +33,7 @@ void bigint_set(BigInt *num, char *arr);
 void bigint_expand(BigInt *num);
 void bigint_add(BigInt *dst, BigInt *a, BigInt *b);
 void naive_add(BigInt *dest, uint32_t operand);
+void bigint_sub(BigInt *dst, BigInt *a, BigInt *b);
 void naive_mult(BigInt *dest, uint32_t multiplier);
 void naive_divide(BigInt *dividend, uint32_t divisor, BigInt *quo, uint32_t *rem);
 void bigint_mem_dump(BigInt bigint);
@@ -44,6 +45,8 @@ bool bigint_isequal_uint32(BigInt a, uint32_t b);
 void bigint_shallow_copy(BigInt *dst, BigInt *src);
 void bigint_deep_copy(BigInt *dst, BigInt *src);
 #endif
+
+#define BIG_INT_IMPLEMENTATION // TODO: REMOVE
 
 #ifdef BIG_INT_IMPLEMENTATION
 #include <assert.h>
@@ -89,6 +92,7 @@ void bigint_set(BigInt *num, char *arr) {
     num->size = 1;
     bigint_increment_size(num);
     for (int i = start_idx; i < strlen(arr); i++) {
+        // TODO: add a check here for numeric char
         // convert char to digit
         uint32_t digit = arr[i] - '0';
 
@@ -164,6 +168,38 @@ void naive_add(BigInt *dest, uint32_t operand) {
 
         if (BIGINT_GUARD(dest) != 0) {
             bigint_increment_size(dest);
+        }
+    }
+}
+
+void bigint_sub(BigInt *dst, BigInt *a, BigInt *b) {
+    // TODO: signed number support
+    bigint_clear(dst);
+    bigint_mem_dump(*a);
+    bigint_mem_dump(*b);
+
+
+    uint64_t carry = 0;
+    size_t len = (a->size > b->size ? a->size : b->size) - 1;
+    for (size_t i = 0; i < len; i++) {
+        // Take a carry from next number (it is assumed that a > b)
+        uint64_t x = a->buf[i];
+        uint64_t y = b->buf[i];
+        // check if carry was used in last operation
+        if(carry) {
+            carry = 0;
+            x--;
+        }
+        // check if carry is required in current operation
+        if(x < y) {
+            carry = 1ULL << BASE;
+        }
+        uint64_t res = x + carry - y;
+        dst->buf[i] = res;
+        printf("%lu + %lu - %lu = %lu\n", x, carry, y, res);
+
+        if (BIGINT_GUARD(dst) != 0) {
+            bigint_increment_size(dst);
         }
     }
 }

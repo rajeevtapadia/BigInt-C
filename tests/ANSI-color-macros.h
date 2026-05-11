@@ -14,6 +14,9 @@
 #define PRINT_FAIL()     printf(ANSI_RED)
 #define PRINT_END_FAIL() printf(ANSI_RESET "\n")
 
+#define printf_green(fmt, ...)  printf(ANSI_GREEN fmt ANSI_RESET "\n", ##__VA_ARGS__)
+#define printf_red(fmt, ...)    printf(ANSI_RED fmt ANSI_RESET "\n", ##__VA_ARGS__)
+#define printf_yellow(fmt, ...) printf(ANSI_YELLOW fmt ANSI_RESET "\n", ##__VA_ARGS__)
 
 #define ANSI_COLOR_MACROS_H
 #endif
