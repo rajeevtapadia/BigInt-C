@@ -160,7 +160,7 @@ void naive_add(BigInt *dest, uint32_t operand) {
     while (carry != 0) {
         i++;
         // add carry to next digit
-        uint64_t temp = dest->buf[i] + carry;
+        uint64_t temp = (uint64_t)dest->buf[i] + carry;
         // store lower 32 bits at i th place
         dest->buf[i] = (uint32_t)(temp & 0xFFFFFFFF);
         // update carry
