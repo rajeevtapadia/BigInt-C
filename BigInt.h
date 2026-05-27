@@ -183,20 +183,28 @@ void bigint_sub(BigInt *dst, BigInt *a, BigInt *b) {
     size_t len = (a->size > b->size ? a->size : b->size) - 1;
     for (size_t i = 0; i < len; i++) {
         // Take a carry from next number (it is assumed that a > b)
-        uint64_t x = a->buf[i];
-        uint64_t y = b->buf[i];
+        uint64_t x = 0;
+        uint64_t y = 0;
+        if(i < a->size) x = a->buf[i];
+        if(i < b->size) y = b->buf[i];
         // check if carry was used in last operation
         if(carry) {
-            carry = 0;
-            x--;
-        }
-        // check if carry is required in current operation
-        if(x < y) {
+            if(x == 0) {
+                carry = (1ULL << BASE) - 1;
+            } else {
+                x--;
+                if(x < y) {
+                    carry = 1ULL << BASE;
+                } else {
+                    carry = 0;
+                }
+            }
+        } else if(x < y){
             carry = 1ULL << BASE;
         }
         uint64_t res = x + carry - y;
         dst->buf[i] = res;
-        printf("%lu + %lu - %lu = %lu\n", x, carry, y, res);
+        printf("%2zu :%10lu + %10lu - %10lu = %10lu\n", i, x, carry, y, res);
 
         if (BIGINT_GUARD(dst) != 0) {
             bigint_increment_size(dst);
