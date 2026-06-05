@@ -29,6 +29,7 @@ typedef struct {
 BigInt bigint_alloc();
 void bigint_clear(BigInt *bigint);
 void bigint_free(BigInt *bigint);
+void bigint_set_zero(BigInt *bigint);
 void bigint_set(BigInt *num, char *arr);
 void bigint_expand(BigInt *num);
 void bigint_add(BigInt *dst, BigInt *a, BigInt *b);
@@ -82,7 +83,16 @@ void bigint_free(BigInt *bigint) {
     bigint->is_negative = 0;
 }
 
+void bigint_set_zero(BigInt *bigint) {
+    bigint->is_negative = 0;
+    for(size_t i = 0; i < bigint->size; i++) {
+        bigint->buf[i] = 0;
+    }
+}
+
 void bigint_set(BigInt *num, char *arr) {
+    bigint_set_zero(num);
+
     int start_idx = 0;
     if(arr[0] == '-') {
         num->is_negative = 1;
