@@ -334,6 +334,9 @@ void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size) {
         bigint = quo;
     } while (!bigint_isequal_uint32(bigint, 0));
 
+    bigint_free(&bigint);
+
+
     if(is_negative) {
         str_buf[i] = '-';
         ++i;
