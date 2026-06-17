@@ -41,6 +41,9 @@ void test_sub(const char *test_name, char *_n1, char *_n2,
   }
 
   printf("------------------------------\n\n");
+  bigint_free(&n1);
+  bigint_free(&n2);
+  // bigint_free(&res);
 }
 
 int main() {
@@ -64,6 +67,13 @@ int main() {
       "100000000000000000000000000000000000000000000000000000000000000000000",
       "99999999999999999999999999999999999988888888888888888888888888888888",
       "11111111111111111111111111111112", false);
+
+  //
+  // test_add("Sub -ve from +ve number", "123", "-23", "100", false);
+  //
+  // test_add("Sub +ve from -ve number", "-123", "23", "100", false);
+  //
+  // test_add("Sub -ve from -ve number", "-123", "-23", "100", true);
 
   return 0;
 }

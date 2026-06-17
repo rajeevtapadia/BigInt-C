@@ -123,9 +123,14 @@ void bigint_increment_size(BigInt *bigint) {
 }
 
 void bigint_expand(BigInt *num) {
+    size_t old_cap = num->capacity;
+    size_t added_bytes = num->capacity;
+
     num->capacity *= 2;
     num->buf = (uint32_t *)realloc(num->buf, num->capacity * sizeof(uint32_t));
     assert(num->buf != NULL && "buy more ram bro\n");
+
+    memset(num->buf + old_cap, 0, added_bytes);
 }
 
 void bigint_add(BigInt *dst, BigInt *a, BigInt *b) {
@@ -318,6 +323,8 @@ void bigint_right_shift(BigInt *bigint, uint32_t shift_by) {
         bigint->size--;
     }
 }
+
+// BAD design that this bitch frees the memory it doesnt own
 void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size) {
     // divide the bigint successivly by 10 and push the remainder to a string buffer
     uint32_t rem = 0;

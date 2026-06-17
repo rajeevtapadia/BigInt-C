@@ -34,6 +34,8 @@ void run_test_case(const char *test_name, char *input_str, uint32_t divisor, cha
         printf("\033[31mfail - wrong quotient and remainder \033[0m\n");
     }
     printf("------------------------------\n");
+    bigint_free(&n);
+    // bigint_free(&q);
 }
 
 int main() {
@@ -54,6 +56,16 @@ int main() {
 
     // Test case 6: Division of a small number with non-zero remainder
     run_test_case("Test 6", "12345", 7, "1763", 4);
+
+    run_test_case("Divide from extremly larger number",
+           "429496729642949672964294967294294964294967296729664294967296"
+           "429496729642949672964294967294294964294967296729664294967296"
+           "429496729642949672964294967294294964294967296729664294967296",
+           10,
+           "429496729642949672964294967294294964294967296729664294967296"
+           "429496729642949672964294967294294964294967296729664294967296"
+           "42949672964294967296429496729429496429496729672966429496729",
+           6);
 
     return 0;
 }
