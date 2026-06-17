@@ -10,6 +10,11 @@ foreach(src ${TEST_SOURCES})
         -Wall
         -Wextra
         -ggdb
+        -fsanitize=address
+    )
+
+    add_link_options(
+        -fsanitize=address
     )
 
     set_target_properties(${name} PROPERTIES
