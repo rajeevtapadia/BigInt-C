@@ -39,6 +39,7 @@ void test_add(const char *test_name, char *initial_value, uint32_t operand, cons
     }
 
     printf("------------------------------\n\n");
+    bigint_free(&n);
 }
 
 int main() {

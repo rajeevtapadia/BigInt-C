@@ -48,6 +48,8 @@ void test_case(const char *test_name, char *input, bool is_negative, size_t expe
         printf(ANSI_RESET);
     }
     printf("------------------------------\n");
+
+    bigint_free(&n);
 }
 
 int main() {

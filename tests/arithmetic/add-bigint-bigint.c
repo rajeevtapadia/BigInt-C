@@ -20,5 +20,9 @@ int main() {
     bigint_to_dec_str(res, buf, 255);
     printf("result\n%s\n", buf);
 
+    bigint_free(&n1);
+    bigint_free(&n2);
+    bigint_free(&res);
+
     return 0;
 }

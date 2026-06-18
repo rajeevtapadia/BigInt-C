@@ -88,10 +88,13 @@ void bigint_set_zero(BigInt *bigint) {
     for(size_t i = 0; i < bigint->size; i++) {
         bigint->buf[i] = 0;
     }
+    bigint->size = 2;
 }
 
 void bigint_set(BigInt *num, char *arr) {
     bigint_set_zero(num);
+
+    if(strcmp(arr, "0") == 0) return;
 
     int start_idx = 0;
     if(arr[0] == '-') {
@@ -101,7 +104,7 @@ void bigint_set(BigInt *num, char *arr) {
     
     num->size = 1;
     bigint_increment_size(num);
-    for (int i = start_idx; i < strlen(arr); i++) {
+    for (size_t i = start_idx; i < strlen(arr); i++) {
         // TODO: add a check here for numeric char
         // convert char to digit
         uint32_t digit = arr[i] - '0';
@@ -138,7 +141,7 @@ void bigint_add(BigInt *dst, BigInt *a, BigInt *b) {
 
     uint32_t carry = 0, a_curr = 0, b_curr = 0;
     size_t n = (a->size > b->size ? a->size : b->size);
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         if (i < a->size)
             a_curr = a->buf[i];
         else
@@ -162,6 +165,7 @@ void bigint_add(BigInt *dst, BigInt *a, BigInt *b) {
     }
 }
 
+// TODO: add support for negative
 void naive_add(BigInt *dest, uint32_t operand) {
     // store addition of least significant digit and operand in 64 bit variable
     uint64_t sum = (uint64_t)dest->buf[0] + operand;
@@ -231,7 +235,7 @@ void naive_mult(BigInt *dest, uint32_t multiplier) {
 
     // store product of least significant digit and multiplier in 64 bit variable
     uint32_t carry = 0;
-    int i;
+    size_t i;
     for (i = 0; i < dest->size; i++) {
         uint64_t product = (uint64_t)dest->buf[i] * multiplier + carry;
         // store lower 32 bits at 0 th place
@@ -312,7 +316,7 @@ void bigint_right_shift(BigInt *bigint, uint32_t shift_by) {
         return;
     }
 
-    for (int i = 0; i < bigint->size - 1; i++) {
+    for (size_t i = 0; i < bigint->size - 1; i++) {
         bigint->buf[i] >>= shift_by;
         uint32_t discarded = bigint->buf[i + 1] & ((1 << shift_by) - 1U);
         bigint->buf[i] |= discarded << (BASE - shift_by);
@@ -324,25 +328,22 @@ void bigint_right_shift(BigInt *bigint, uint32_t shift_by) {
     }
 }
 
-// BAD design that this bitch frees the memory it doesnt own
 void bigint_to_dec_str(BigInt bigint, char *str_buf, size_t str_buf_size) {
     // divide the bigint successivly by 10 and push the remainder to a string buffer
     uint32_t rem = 0;
     size_t i = 0;
-    BigInt quo;
+    BigInt dividend = bigint;
+    BigInt quo = bigint_alloc();
     bool is_negative = bigint.is_negative;
     
     do {
         assert(i < str_buf_size && "buffer overflow");
-        quo = bigint_alloc();
-        naive_divide(&bigint, 10, &quo, &rem);
+        naive_divide(&dividend, 10, &quo, &rem);
         str_buf[i++] = rem + '0';
-        bigint_free(&bigint);
-        bigint = quo;
-    } while (!bigint_isequal_uint32(bigint, 0));
+        bigint_deep_copy(&dividend, &quo);
+    } while (!bigint_isequal_uint32(dividend, 0));
 
-    bigint_free(&bigint);
-
+    bigint_free(&quo);
 
     if(is_negative) {
         str_buf[i] = '-';
@@ -364,7 +365,7 @@ bool bigint_isequal_uint32(BigInt a, uint32_t b) {
     if (a.buf[0] != b) {
         return false;
     }
-    for (int i = 1; i < a.size; i++) {
+    for (size_t i = 1; i < a.size; i++) {
         if (a.buf[i] != 0) {
             return false;
         }

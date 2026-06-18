@@ -43,7 +43,7 @@ void test_sub(const char *test_name, char *_n1, char *_n2,
   printf("------------------------------\n\n");
   bigint_free(&n1);
   bigint_free(&n2);
-  // bigint_free(&res);
+  bigint_free(&res);
 }
 
 int main() {

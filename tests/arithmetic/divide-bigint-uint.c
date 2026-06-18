@@ -35,7 +35,7 @@ void run_test_case(const char *test_name, char *input_str, uint32_t divisor, cha
     }
     printf("------------------------------\n");
     bigint_free(&n);
-    // bigint_free(&q);
+    bigint_free(&q);
 }
 
 int main() {
