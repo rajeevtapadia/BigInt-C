@@ -4,7 +4,7 @@ foreach(src ${TEST_SOURCES})
     get_filename_component(name ${src} NAME_WE)
 
     add_executable(${name} ${src})
-    target_link_libraries(${name} PRIVATE bigint)
+    target_link_libraries(${name} PRIVATE bigint -fsanitize=address)
 
     target_compile_options(${name} PRIVATE
         -Wall
